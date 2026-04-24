@@ -17,4 +17,7 @@ const profileSchema = mongoose.Schema({
 
 
 
-export default mongoose.model("profile", profileSchema)
+// Check if the model exists, otherwise create it
+const Profile = mongoose.models.profile || mongoose.model("profile", profileSchema);
+
+export default Profile;

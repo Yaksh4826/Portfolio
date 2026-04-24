@@ -1,8 +1,14 @@
-import mongoose from "mongoose";
-
-
-const MONGO_URI =  process.env.MONGO_URI;
+import mongoose from 'mongoose';
 
 export const connectDB = async () => {
-  return mongoose.connect(MONGODB_URI);
+  // Access via process.env
+  const uri = process.env.MONGODB_URI;
+
+  if (!uri) {
+    throw new Error("MONGODB_URI is missing from .env");
+  }
+
+  if (mongoose.connection.readyState >= 1) return;
+
+  return mongoose.connect(uri);
 };
