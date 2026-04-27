@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 
 export async function POST (request){
 
-    const password = await request.json()
+    const {password }= await request.json()
 
     if(password == process.env.ADMIN_PASS){
         const cookieStore = await cookies();
