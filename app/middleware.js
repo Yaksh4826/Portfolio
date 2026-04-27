@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
+import { connectDB } from './lib/db';
 
+export  async function middleware(request) {
 
-export function middleware(request) {
+    await connectDB()
     // 1. Identify if the request is trying to hit an admin route
     if (request.nextUrl.pathname.startsWith('/api/admin')) {
 

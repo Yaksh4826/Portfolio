@@ -7,7 +7,7 @@ const ProjectSchema = new mongoose.Schema({
   summary: String,                                     // Short 1-liner for cards
   
   // High-quality images (Base64 or Supabase URLs)
-  thumbnail: { type: String, required: true },
+  thumbnail: { type: String},
   
   // Tech & Classification
   tags: [String],                                      // e.g., ["Next.js", "AI", "MERN"]
