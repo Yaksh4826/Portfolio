@@ -2,20 +2,23 @@ import techStackModel from "@/app/models/techStackModel";
 import { connectDB } from "@/app/lib/db";
 import { NextResponse } from "next/server";
 
-export async function GET(req){
-try{
-await connectDB()
-const techstack =  await techStackModel.find()
-if(!techstack){
-    return NextResponse.json({success:false , message:"tech stack not found"})
-}
-return NextResponse.json({success:true, techstack:techstack})
+export async function GET() {
+  await connectDB();
+  try {
+    const techstack = await techStackModel
+      .find()
+      .select("name category icon")
+      .sort({ category: 1, name: 1 })
+      .lean();
 
-
-}catch{
-return NextResponse.json({success:false, error:e})
-
-}
-
-
+    return NextResponse.json({
+      success: true,
+      techstack: techstack ?? [],
+    });
+  } catch (e) {
+    return NextResponse.json(
+      { success: false, error: String(e), techstack: [] },
+      { status: 500 },
+    );
+  }
 }

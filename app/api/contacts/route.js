@@ -1,37 +1,53 @@
 import { NextResponse } from "next/server";
 
-
 export async function POST(req) {
   try {
+    const body = await req.json();
+    const name = typeof body.name === "string" ? body.name.trim() : "";
+    const email = typeof body.email === "string" ? body.email.trim() : "";
+    const message = typeof body.message === "string" ? body.message.trim() : "";
 
-    const { name, email, message } = await req.json();
+    if (!name || !email || !message) {
+      return NextResponse.json(
+        { success: false, message: "Name, email, and message are required." },
+        { status: 400 },
+      );
+    }
 
-   
-    // 2. Send to Discord
-    const discordPayload = {
-      embeds: [
-        {
-          title: "🚀 New Portfolio Inquiry",
-          color: 0x00ff00, // Green
-          fields: [
-            { name: "Name", value: name, inline: true },
-            { name: "Email", value: email, inline: true },
-            { name: "Message", value: message },
-          ],
-          timestamp: new Date().toISOString(),
-        },
-      ],
-    };
+    const webhook = process.env.DISCORD_WEBHOOK_URL;
+    if (webhook) {
+      const discordPayload = {
+        embeds: [
+          {
+            title: "New portfolio inquiry",
+            color: 0x6b4fc8,
+            fields: [
+              { name: "Name", value: name, inline: true },
+              { name: "Email", value: email, inline: true },
+              { name: "Message", value: message },
+            ],
+            timestamp: new Date().toISOString(),
+          },
+        ],
+      };
 
-    await fetch(process.env.DISCORD_WEBHOOK_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(discordPayload),
-    });
+      const discordRes = await fetch(webhook, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(discordPayload),
+      });
 
-    return NextResponse.json({ success: true , message:"Message sent successfully"});
+      if (!discordRes.ok) {
+        return NextResponse.json(
+          { success: false, message: "Could not deliver message. Try again later." },
+          { status: 502 },
+        );
+      }
+    }
+
+    return NextResponse.json({ success: true, message: "Message sent successfully" });
   } catch (error) {
-    console.error("Discord Webhook Error:", error);
-    return NextResponse.json({ success: false }, { status: 500 });
+    console.error("Contact POST error:", error);
+    return NextResponse.json({ success: false, message: "Server error." }, { status: 500 });
   }
 }
