@@ -45,7 +45,9 @@ export default function ProjectsSection({ headlineFontClass }) {
       setStatus("loading");
       setErrorMessage(null);
       try {
-        const res = await fetch("/api/projects", { cache: "no-store" });
+        const res = await fetch("/api/projects", {
+          next: { revalidate: 60 },
+        });
         const data = await res.json();
         if (cancelled) return;
         if (!data.success) {

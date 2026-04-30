@@ -17,11 +17,23 @@ export async function GET() {
       .lean();
 
     if (!projects?.length) {
-      return NextResponse.json({ success: true, projects: [] });
+      return NextResponse.json(
+        { success: true, projects: [] },
+        { headers: { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300" } },
+      );
     }
 
-    return NextResponse.json({ success: true, projects });
+    return NextResponse.json(
+      { success: true, projects },
+      { headers: { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300" } },
+    );
   } catch (e) {
-    return NextResponse.json({ success: false, error: String(e) }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: String(e) },
+      {
+        status: 500,
+        headers: { "Cache-Control": "private, no-store" },
+      },
+    );
   }
 }

@@ -21,7 +21,7 @@ function buildTelHref(raw) {
 
 export default async function Home() {
   const URI = process.env.API_URI;
-  const res = await fetch(`${URI}/profile`);
+  const res = await fetch(`${URI}/profile`, { next: { revalidate: 120 } });
   const data = await res.json();
   const { name, tagLine, bio, avatar, socials } = data.profileData[0];
 

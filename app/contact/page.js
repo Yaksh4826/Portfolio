@@ -55,16 +55,17 @@ export default async function ContactPage() {
       : null;
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-14 md:py-16">
+    <div className="mx-auto max-w-3xl px-4 pt-2 pb-10 sm:px-6 sm:pt-3 sm:pb-12 md:pb-14">
       <Link
         href="/"
+        prefetch
         className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground transition hover:text-foreground"
       >
         <ArrowLeft className="size-4" />
         Back to home
       </Link>
 
-      <header className="mt-8">
+      <header className="mt-4 sm:mt-5">
         <h1
           className={cn(
             titleFont.className,
@@ -80,7 +81,7 @@ export default async function ContactPage() {
         </p>
       </header>
 
-      <div className="mt-10 grid gap-10 lg:grid-cols-[1fr_1.1fr] lg:gap-12">
+      <div className="mt-6 grid gap-8 sm:mt-8 lg:grid-cols-[1fr_1.1fr] lg:gap-10">
         <div className="space-y-6">
           <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
             Details

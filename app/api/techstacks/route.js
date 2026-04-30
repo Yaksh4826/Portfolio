@@ -11,14 +11,14 @@ export async function GET() {
       .sort({ category: 1, name: 1 })
       .lean();
 
-    return NextResponse.json({
-      success: true,
-      techstack: techstack ?? [],
-    });
+    return NextResponse.json(
+      { success: true, techstack: techstack ?? [] },
+      { headers: { "Cache-Control": "public, s-maxage=120, stale-while-revalidate=600" } },
+    );
   } catch (e) {
     return NextResponse.json(
       { success: false, error: String(e), techstack: [] },
-      { status: 500 },
+      { status: 500, headers: { "Cache-Control": "private, no-store" } },
     );
   }
 }

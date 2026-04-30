@@ -64,7 +64,9 @@ export default function TechStackSection({ headlineFontClass }) {
     (async () => {
       setStatus("loading");
       try {
-        const res = await fetch("/api/techstacks", { cache: "no-store" });
+        const res = await fetch("/api/techstacks", {
+          next: { revalidate: 120 },
+        });
         const text = await res.text();
         if (cancelled) return;
         let data;

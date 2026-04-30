@@ -227,6 +227,7 @@ const Navbar = () => {
           >
             <Link
               href={isHome ? "#home" : "/"}
+              prefetch={!isHome}
               className={cn(
                 NAV_TX,
                 "hidden md:flex flex-shrink-0 items-center justify-center rounded-full",
@@ -250,6 +251,7 @@ const Navbar = () => {
                 <li key={navItem.id} className="flex-shrink-0">
                   <Link
                     href={getNavHref(navItem)}
+                    prefetch={Boolean(navItem.href)}
                     className={cn(
                       NAV_TX,
                       "inline-flex items-center rounded-full text-xs font-medium sm:text-sm",
@@ -336,6 +338,7 @@ const Navbar = () => {
               <li>
                 <Link
                   href={isHome ? "#home" : "/"}
+                  prefetch={!isHome}
                   className={cn(
                     NAV_TX,
                     "block rounded-full px-3 py-2.5 text-sm font-medium",
@@ -357,6 +360,7 @@ const Navbar = () => {
                 <li key={navItem.id}>
                   <Link
                     href={getNavHref(navItem)}
+                    prefetch={Boolean(navItem.href)}
                     className={cn(
                       NAV_TX,
                       "block rounded-full px-3 py-2.5 text-sm font-medium",
