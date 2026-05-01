@@ -45,9 +45,7 @@ export default function ProjectsSection({ headlineFontClass }) {
       setStatus("loading");
       setErrorMessage(null);
       try {
-        const res = await fetch("/api/projects", {
-          next: { revalidate: 60 },
-        });
+        const res = await fetch("/api/projects");
         const data = await res.json();
         if (cancelled) return;
         if (!data.success) {
@@ -113,7 +111,7 @@ export default function ProjectsSection({ headlineFontClass }) {
           {!showSkeleton && status === "ready"
             ? projects.map((project, index) => (
                 <ProjectCard
-                  key={project.slug || project._id || index}
+                  key={String(project.slug || project._id || index)}
                   project={project}
                   index={index}
                   headlineFontClass={headlineFontClass}

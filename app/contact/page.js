@@ -3,6 +3,7 @@ import { Space_Grotesk } from "next/font/google";
 import { ArrowLeft, Mail, Phone } from "lucide-react";
 import { FaGithub, FaLinkedin } from "react-icons/fa";
 import { SiGmail } from "react-icons/si";
+import PageEnter from "@/components/PageEnter";
 import { cn } from "@/lib/utils";
 import ContactForm from "@/components/ContactForm";
 
@@ -55,7 +56,8 @@ export default async function ContactPage() {
       : null;
 
   return (
-    <div className="mx-auto max-w-3xl px-4 pt-2 pb-10 sm:px-6 sm:pt-3 sm:pb-12 md:pb-14">
+    <PageEnter>
+      <div className="mx-auto max-w-3xl px-4 pt-2 pb-10 sm:px-6 sm:pt-3 sm:pb-12 md:pb-14">
       <Link
         href="/"
         prefetch
@@ -187,5 +189,6 @@ export default async function ContactPage() {
         </div>
       </div>
     </div>
+    </PageEnter>
   );
 }

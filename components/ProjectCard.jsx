@@ -49,11 +49,14 @@ function MockThumbnail({ title }) {
 export default function ProjectCard({ project, index, headlineFontClass }) {
   const { title, slug, summary, thumbnail, tags, completedDate } = project;
 
+  const safeSlug = slug != null ? String(slug).trim() : "";
+  const hasDetailPage = Boolean(safeSlug);
+  const href = hasDetailPage ? `/projects/${encodeURIComponent(safeSlug)}` : null;
+
   const safeSummary = summary && String(summary).trim() ? String(summary).trim() : "";
 
   const completedLabel = formatCompleted(completedDate);
   const listTags = Array.isArray(tags) ? tags.filter(Boolean).slice(0, 8) : [];
-  const href = `/projects/${encodeURIComponent(slug)}`;
   const showThumb = typeof thumbnail === "string" && thumbnail.trim().length > 0;
 
   const thumbSizes =
@@ -112,17 +115,24 @@ export default function ProjectCard({ project, index, headlineFontClass }) {
               "min-w-0 text-xl font-bold leading-tight tracking-tight text-foreground sm:text-2xl",
             )}
           >
-            <Link href={href} className="hover:text-foreground/90">
-              {title}
-            </Link>
+            {href ? (
+              <Link href={href} prefetch className="hover:text-foreground/90">
+                {title}
+              </Link>
+            ) : (
+              <span>{title}</span>
+            )}
           </h3>
-          <Link
-            href={href}
-            className="mt-0.5 inline-flex shrink-0 rounded-full border border-border bg-background p-2 text-foreground shadow-sm transition hover:bg-muted/80 active:scale-95"
-            aria-label={`Open ${title}`}
-          >
-            <ArrowUpRight className="size-5" strokeWidth={2.25} />
-          </Link>
+          {href ? (
+            <Link
+              href={href}
+              prefetch
+              className="mt-0.5 inline-flex shrink-0 rounded-full border border-border bg-background p-2 text-foreground shadow-sm transition hover:bg-muted/80 active:scale-95"
+              aria-label={`Open ${title}`}
+            >
+              <ArrowUpRight className="size-5" strokeWidth={2.25} />
+            </Link>
+          ) : null}
         </div>
 
         {safeSummary ? (
@@ -140,9 +150,9 @@ export default function ProjectCard({ project, index, headlineFontClass }) {
 
         {listTags.length > 0 ? (
           <ul className="flex flex-wrap gap-2">
-            {listTags.map((tag) => (
+            {listTags.map((tag, i) => (
               <li
-                key={tag}
+                key={`${tag}-${i}`}
                 className="rounded-full bg-background/80 px-3 py-1 text-xs font-medium text-foreground ring-1 ring-black/[0.06] dark:ring-white/10"
               >
                 {tag}
@@ -152,12 +162,19 @@ export default function ProjectCard({ project, index, headlineFontClass }) {
         ) : null}
 
         <div className="pt-1">
-          <Link
-            href={href}
-            className="inline-flex min-h-10 items-center justify-center rounded-full border border-border bg-background px-6 text-sm font-semibold text-foreground shadow-sm transition hover:bg-muted/80 active:scale-[0.98]"
-          >
-            Explore more
-          </Link>
+          {href ? (
+            <Link
+              href={href}
+              prefetch
+              className="inline-flex min-h-10 items-center justify-center rounded-full border border-border bg-background px-6 text-sm font-semibold text-foreground shadow-sm transition hover:bg-muted/80 active:scale-[0.98]"
+            >
+              Explore project
+            </Link>
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              Add a slug in the admin to enable the detail page.
+            </p>
+          )}
         </div>
       </div>
     </article>
