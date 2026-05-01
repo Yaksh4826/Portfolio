@@ -5,9 +5,9 @@ import { connectDB } from "@/app/lib/db";
 
 
 // updating the tech stack items
-export async function POST(req, {params}){
+export async function POST(req, { params }) {
     await connectDB();
-    const {id} = params;
+    const { id } = await params;
     const body = await req.json();
 
    // findOneAndUpdate(filter, update, options)
@@ -26,10 +26,10 @@ export async function POST(req, {params}){
 }
 
 // Deleting the tech stack items
-export async function DELETE(req, { params }) {
+export async function DELETE(_req, { params }) {
     try {
         await connectDB();
-        const { id } = params;
+        const { id } = await params;
         
         const deleted = await techStackModel.findByIdAndDelete(id);
 
