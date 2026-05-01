@@ -29,8 +29,22 @@ async function safeJson(res) {
   }
 }
 
+function getServerBaseUrl() {
+  const explicit =
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    process.env.NEXT_PUBLIC_VERCEL_URL;
+  if (typeof explicit === "string" && explicit.trim()) {
+    const value = explicit.trim().replace(/\/$/, "");
+    return /^https?:\/\//i.test(value) ? value : `https://${value}`;
+  }
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`;
+  }
+  return "http://localhost:3000";
+}
+
 export default async function Home() {
-  const URI = process.env.API_URI;
+  const baseUrl = getServerBaseUrl();
   let name = "";
   let tagLine = "";
   let bio = "";
@@ -38,19 +52,19 @@ export default async function Home() {
   let socials = {};
 
   try {
-    const profileEndpoint = URI ? `${URI}/profile` : "";
-    if (profileEndpoint) {
-      const res = await fetch(profileEndpoint, { next: { revalidate: 120 } });
-      if (res.ok) {
-        const data = await safeJson(res);
-        const profile = data?.profileData?.[0];
-        if (profile) {
-          name = profile.name || "";
-          tagLine = profile.tagLine || "";
-          bio = profile.bio || "";
-          avatar = profile.avatar || "";
-          socials = profile.socials || {};
-        }
+    const res = await fetch(`${baseUrl}/api/profile`, {
+      next: { revalidate: 120 },
+      headers: { Accept: "application/json" },
+    });
+    if (res.ok) {
+      const data = await safeJson(res);
+      const profile = data?.profileData?.[0];
+      if (profile) {
+        name = profile.name || "";
+        tagLine = profile.tagLine || "";
+        bio = profile.bio || "";
+        avatar = profile.avatar || "";
+        socials = profile.socials || {};
       }
     }
   } catch {
@@ -76,10 +90,13 @@ export default async function Home() {
 
   let experiences = [];
   try {
-    const exRes = await fetch(`${URI}/experiences`, { next: { revalidate: 120 } });
+    const exRes = await fetch(`${baseUrl}/api/experiences`, {
+      next: { revalidate: 120 },
+      headers: { Accept: "application/json" },
+    });
     if (exRes.ok) {
-      const exJson = await exRes.json();
-      if (exJson.success && Array.isArray(exJson.experiences)) {
+      const exJson = await safeJson(exRes);
+      if (exJson?.success && Array.isArray(exJson.experiences)) {
         experiences = exJson.experiences;
       }
     }
