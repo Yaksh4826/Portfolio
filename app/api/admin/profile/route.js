@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
+import { connectDB } from "@/app/lib/db";
 import profileModel from "@/app/models/profileModel";
 
 export async function POST(req) {
     try {
-      
+        await connectDB();
         const body = await req.json();
 
         // The "Upsert" Strategy: 
