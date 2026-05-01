@@ -6,6 +6,7 @@ import { SiGmail } from "react-icons/si";
 import PageEnter from "@/components/PageEnter";
 import { cn } from "@/lib/utils";
 import ContactForm from "@/components/ContactForm";
+import { getBaseUrl } from "@/lib/utils";
 
 const titleFont = Space_Grotesk({ subsets: ["latin"], display: "swap" });
 
@@ -23,12 +24,13 @@ export const metadata = {
   description: "Get in touch for collaborations and opportunities.",
 };
 
+export const dynamic = 'force-dynamic';
+
 export default async function ContactPage() {
-  const URI = process.env.API_URI;
   let name = "";
   let socials = {};
   try {
-    const res = await fetch(`${URI}/profile`, { next: { revalidate: 120 } });
+    const res = await fetch(`${getBaseUrl()}/api/profile`, { next: { revalidate: 120 } });
     const data = await res.json();
     const p = data?.profileData?.[0];
     if (p) {
