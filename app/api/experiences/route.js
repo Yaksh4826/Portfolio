@@ -1,21 +1,27 @@
 import { NextResponse } from "next/server";
-import experienceModel from "@/app/models/profileModel.js";
+import experienceModel from "@/app/models/experienceModel.js";
 import { connectDB } from "@/app/lib/db";
 
-export async function GET(request) {
+const LIST_FIELDS = "company role location duration description technologies createdAt updatedAt";
+
+export async function GET() {
   await connectDB();
 
-  const experiences = await experienceModel.find();
+  try {
+    const experiences = await experienceModel
+      .find()
+      .select(LIST_FIELDS)
+      .sort({ createdAt: -1, updatedAt: -1, _id: -1 })
+      .lean();
 
-  if (!experiences || experiences.length === 0) {
+    return NextResponse.json({
+      success: true,
+      experiences: experiences ?? [],
+    });
+  } catch (e) {
     return NextResponse.json(
-      { success: false, message: "No experiences added" },
-      { status: 404 }
+      { success: false, error: String(e), experiences: [] },
+      { status: 500 },
     );
   }
-
-  return NextResponse.json(
-    { success: true, experiences },
-    { status: 200 }
-  );
 }
