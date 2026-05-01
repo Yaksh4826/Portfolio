@@ -21,6 +21,11 @@ const nextConfig = {
         hostname: "cdn.worldvectorlogo.com",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "res.cloudinary.com",
+        pathname: "/**",
+      },
     ],
   },
 };
