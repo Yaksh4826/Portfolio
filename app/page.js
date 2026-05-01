@@ -19,11 +19,43 @@ function buildTelHref(raw) {
   return body.toLowerCase().startsWith("tel:") ? body : `tel:${body}`;
 }
 
+async function safeJson(res) {
+  const contentType = res.headers.get("content-type") || "";
+  if (!contentType.toLowerCase().includes("application/json")) return null;
+  try {
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
 export default async function Home() {
   const URI = process.env.API_URI;
-  const res = await fetch(`${URI}/profile`, { next: { revalidate: 120 } });
-  const data = await res.json();
-  const { name, tagLine, bio, avatar, socials } = data.profileData[0];
+  let name = "";
+  let tagLine = "";
+  let bio = "";
+  let avatar = "";
+  let socials = {};
+
+  try {
+    const profileEndpoint = URI ? `${URI}/profile` : "";
+    if (profileEndpoint) {
+      const res = await fetch(profileEndpoint, { next: { revalidate: 120 } });
+      if (res.ok) {
+        const data = await safeJson(res);
+        const profile = data?.profileData?.[0];
+        if (profile) {
+          name = profile.name || "";
+          tagLine = profile.tagLine || "";
+          bio = profile.bio || "";
+          avatar = profile.avatar || "";
+          socials = profile.socials || {};
+        }
+      }
+    }
+  } catch {
+    /* ignore profile fetch errors to avoid prerender failures */
+  }
 
   const email = process.env.EMAIL;
   const mailHref =
