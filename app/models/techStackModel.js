@@ -7,7 +7,7 @@ const TechStackSchema = new mongoose.Schema({
     enum: ["Frontend", "Backend", "AI/ML", "Robotics", "Tools"],
     required: true,
   },
-  icon: { type: String, required: true },
+  icon: { type: String, required: true, lowercase: true, trim: true },
 });
 
 export default mongoose.models.techStack || mongoose.model("techStack", TechStackSchema);

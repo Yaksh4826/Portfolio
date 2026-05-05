@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import StackIcon from "tech-stack-icons";
 import { cn } from "@/lib/utils";
 
 const inputClass =
@@ -22,7 +23,17 @@ export default function AdminTechStackPage() {
   const [editingId, setEditingId] = useState(null);
   const [msg, setMsg] = useState({ type: "", text: "" });
   const [busy, setBusy] = useState(false);
-  const [uploading, setUploading] = useState(false);
+  const [iconQuery, setIconQuery] = useState("");
+  const [iconSuggestions, setIconSuggestions] = useState([]);
+  const [iconExactMatch, setIconExactMatch] = useState(false);
+  const [iconSearchLoading, setIconSearchLoading] = useState(false);
+  const groupedList = CATEGORIES.map((category) => ({
+    category,
+    items: list
+      .filter((row) => row?.category === category)
+      .slice()
+      .sort((a, b) => String(a?.name ?? "").localeCompare(String(b?.name ?? ""))),
+  })).filter((group) => group.items.length > 0);
 
   const load = useCallback(async () => {
     const r = await fetch("/api/techstacks");
@@ -32,12 +43,16 @@ export default function AdminTechStackPage() {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- async fetch updates state after network resolves
     load();
   }, [load]);
 
   function startNew() {
     setEditingId(null);
     setForm(empty);
+    setIconQuery("");
+    setIconSuggestions([]);
+    setIconExactMatch(false);
     setMsg({ type: "", text: "" });
   }
 
@@ -48,42 +63,46 @@ export default function AdminTechStackPage() {
       category: row.category ?? "Frontend",
       icon: row.icon ?? "",
     });
+    setIconQuery(row.icon ?? "");
     setMsg({ type: "", text: "" });
   }
 
-  async function onPickIcon(e) {
-    const file = e.target.files?.[0];
-    e.target.value = "";
-    if (!file) return;
-    setUploading(true);
-    setMsg({ type: "", text: "" });
-    try {
-      const fd = new FormData();
-      fd.append("file", file);
-      const r = await fetch("/api/admin/upload-image", {
-        method: "POST",
-        body: fd,
-        credentials: "include",
-      });
-      const d = await r.json();
-      if (!r.ok) throw new Error(d.error || d.message || "Upload failed");
-      setForm((f) => ({ ...f, icon: d.url }));
-      setMsg({ type: "ok", text: "Icon uploaded to Cloudinary." });
-    } catch (err) {
-      setMsg({
-        type: "err",
-        text: err instanceof Error ? err.message : "Upload failed",
-      });
-    } finally {
-      setUploading(false);
+  useEffect(() => {
+    let cancelled = false;
+
+    async function runSearch() {
+      setIconSearchLoading(true);
+      try {
+        const q = encodeURIComponent(iconQuery);
+        const res = await fetch(`/api/admin/techstack/icons?q=${q}`);
+        const data = await res.json();
+        if (cancelled) return;
+        setIconSuggestions(Array.isArray(data.icons) ? data.icons : []);
+        setIconExactMatch(Boolean(data.exactMatch));
+      } catch {
+        if (cancelled) return;
+        setIconSuggestions([]);
+        setIconExactMatch(false);
+      } finally {
+        if (!cancelled) setIconSearchLoading(false);
+      }
     }
-  }
+
+    runSearch();
+    return () => {
+      cancelled = true;
+    };
+  }, [iconQuery]);
 
   async function onSubmit(e) {
     e.preventDefault();
-    const iconUrl = form.icon.trim();
-    if (!iconUrl) {
-      setMsg({ type: "err", text: "Upload an icon image (Cloudinary)." });
+    const iconName = form.icon.trim().toLowerCase();
+    if (!iconName) {
+      setMsg({ type: "err", text: "Enter a tech-stack-icons icon key (e.g. nextjs)." });
+      return;
+    }
+    if (!iconExactMatch) {
+      setMsg({ type: "err", text: "Select a valid icon key from suggestions before saving." });
       return;
     }
     setBusy(true);
@@ -91,7 +110,7 @@ export default function AdminTechStackPage() {
     const body = {
       name: form.name.trim(),
       category: form.category,
-      icon: iconUrl,
+      icon: iconName,
     };
     try {
       if (editingId) {
@@ -137,60 +156,68 @@ export default function AdminTechStackPage() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-foreground">Tech stack</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Icons are uploaded to Cloudinary (same as project images). PNG or SVG recommended.
+          Uses `tech-stack-icons` npm package. Store icon keys like `nextjs`, `react`, `mongodb`.
         </p>
       </div>
 
       <div className="grid gap-10 lg:grid-cols-[1fr_340px]">
         <div>
           <h2 className="text-sm font-semibold">Skills</h2>
-          <ul className="mt-3 divide-y divide-border rounded-2xl border border-border bg-card">
-            {list.length === 0 ? (
-              <li className="p-4 text-sm text-muted-foreground">No items.</li>
-            ) : (
-              list.map((row) => {
-                const id = idStr(row);
-                return (
-                  <li key={id} className="flex flex-wrap items-center justify-between gap-2 p-4">
-                    <div className="flex min-w-0 items-center gap-3">
-                      {row.icon ? (
-                        // eslint-disable-next-line @next/next/no-img-element -- admin preview, any host
-                        <img
-                          src={row.icon}
-                          alt=""
-                          className="size-10 shrink-0 rounded-lg border border-border bg-muted/30 object-contain p-1"
-                        />
-                      ) : (
-                        <span className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-dashed border-border text-xs text-muted-foreground">
-                          —
-                        </span>
-                      )}
-                      <div className="min-w-0">
-                        <p className="font-medium text-foreground">{row.name}</p>
-                        <p className="truncate text-xs text-muted-foreground">{row.category}</p>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        onClick={() => startEdit(row)}
-                        className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium hover:bg-muted"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => remove(id)}
-                        className="rounded-lg border border-destructive/40 px-3 py-1.5 text-xs text-destructive hover:bg-destructive/10"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </li>
-                );
-              })
-            )}
-          </ul>
+          {list.length === 0 ? (
+            <div className="mt-3 rounded-2xl border border-border bg-card p-4 text-sm text-muted-foreground">
+              No items.
+            </div>
+          ) : (
+            <div className="mt-3 space-y-4">
+              {groupedList.map((group) => (
+                <div key={group.category}>
+                  <h3 className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+                    {group.category}
+                  </h3>
+                  <ul className="divide-y divide-border rounded-2xl border border-border bg-card">
+                    {group.items.map((row) => {
+                      const id = idStr(row);
+                      return (
+                        <li key={id} className="flex flex-wrap items-center justify-between gap-2 p-4">
+                          <div className="flex min-w-0 items-center gap-3">
+                            {row.icon ? (
+                              <span className="size-10 shrink-0 rounded-lg border border-border bg-muted/30 p-1">
+                                <StackIcon name={row.icon.trim().toLowerCase()} className="size-full" />
+                              </span>
+                            ) : (
+                              <span className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-dashed border-border text-xs text-muted-foreground">
+                                —
+                              </span>
+                            )}
+                            <div className="min-w-0">
+                              <p className="font-medium text-foreground">{row.name}</p>
+                              <p className="truncate text-xs text-muted-foreground">{row.icon}</p>
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              onClick={() => startEdit(row)}
+                              className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium hover:bg-muted"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => remove(id)}
+                              className="rounded-lg border border-destructive/40 px-3 py-1.5 text-xs text-destructive hover:bg-destructive/10"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <form
@@ -225,52 +252,55 @@ export default function AdminTechStackPage() {
             </select>
           </Field>
           <Field label="Icon">
-            <div className="mt-1 flex flex-wrap items-center gap-3">
-              {form.icon ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={form.icon}
-                  alt=""
-                  className="size-14 rounded-lg border border-border bg-muted/30 object-contain p-1"
-                />
-              ) : (
-                <span className="flex size-14 items-center justify-center rounded-lg border border-dashed border-border text-[10px] text-muted-foreground">
-                  No file
-                </span>
-              )}
-              <div className="flex flex-col gap-2">
-                <label className="inline-flex w-fit cursor-pointer">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={onPickIcon}
-                    disabled={uploading || busy}
-                  />
-                  <span
-                    className={cn(
-                      "rounded-md border border-border bg-muted/50 px-3 py-2 text-xs font-medium text-foreground",
-                      (uploading || busy) && "pointer-events-none opacity-50",
-                    )}
-                  >
-                    {uploading ? "Uploading…" : "Upload to Cloudinary"}
-                  </span>
-                </label>
-                {form.icon ? (
-                  <button
-                    type="button"
-                    className="w-fit text-xs text-destructive hover:underline"
-                    onClick={() => setForm((f) => ({ ...f, icon: "" }))}
-                    disabled={busy || uploading}
-                  >
-                    Remove icon
-                  </button>
-                ) : null}
-              </div>
-            </div>
+            <input
+              className={inputClass}
+              value={iconQuery}
+              onChange={(e) => {
+                const value = e.target.value.toLowerCase();
+                setIconQuery(value);
+                setForm((f) => ({ ...f, icon: value }));
+              }}
+              placeholder="Search icon name (example: nextjs)"
+              required
+            />
             <p className="mt-1 text-[11px] text-muted-foreground">
-              Saved value is the Cloudinary URL returned after upload.
+              Type to search, then click a suggestion. Only valid keys can be saved.
             </p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {iconSuggestions.map((icon) => (
+                <button
+                  key={icon}
+                  type="button"
+                  onClick={() => {
+                    setIconQuery(icon);
+                    setForm((f) => ({ ...f, icon }));
+                    setIconExactMatch(true);
+                  }}
+                  className={cn(
+                    "rounded-full border border-border px-2.5 py-1 text-[11px] hover:bg-muted",
+                    form.icon === icon && "border-primary bg-primary/10 text-primary",
+                  )}
+                >
+                  {icon}
+                </button>
+              ))}
+              {!iconSearchLoading && iconSuggestions.length === 0 ? (
+                <span className="text-[11px] text-muted-foreground">No matches found.</span>
+              ) : null}
+            </div>
+            {iconSearchLoading ? (
+              <p className="mt-1 text-[11px] text-muted-foreground">Searching icons...</p>
+            ) : null}
+            {iconExactMatch ? (
+              <p className="mt-1 text-[11px] text-green-600">Valid icon selected.</p>
+            ) : iconQuery.trim() ? (
+              <p className="mt-1 text-[11px] text-destructive">Choose one of the suggested keys.</p>
+            ) : null}
+            {iconExactMatch && form.icon.trim() ? (
+              <span className="mt-2 inline-flex size-14 items-center justify-center rounded-lg border border-border bg-muted/30 p-2">
+                <StackIcon name={form.icon.trim().toLowerCase()} className="size-full" />
+              </span>
+            ) : null}
           </Field>
           {msg.text ? (
             <p className={cn("text-sm", msg.type === "ok" ? "text-green-600" : "text-destructive")}>

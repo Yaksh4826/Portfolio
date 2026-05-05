@@ -1,6 +1,7 @@
 import techStackModel from "@/app/models/techStackModel";
 import { NextResponse } from "next/server";
 import { connectDB } from "@/app/lib/db";
+import { isValidTechStackIconName } from "@/app/lib/techStackIcons";
 
 
 
@@ -9,11 +10,19 @@ export async function POST(req, { params }) {
     await connectDB();
     const { id } = await params;
     const body = await req.json();
+    const icon = typeof body?.icon === "string" ? body.icon.trim().toLowerCase() : "";
+
+    if (!isValidTechStackIconName(icon)) {
+        return NextResponse.json(
+            { success: false, message: "Invalid icon key. Pick one from tech-stack-icons search." },
+            { status: 400 },
+        );
+    }
 
    // findOneAndUpdate(filter, update, options)
     const updated = await techStackModel.findOneAndUpdate(
         { _id: id }, 
-        body, 
+        { ...body, icon }, 
         { new: true } // This returns the updated document instead of the old one
     );
 

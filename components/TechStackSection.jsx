@@ -1,8 +1,8 @@
 "use client";
 
-import Image from "next/image";
 import { motion, useReducedMotion } from "framer-motion";
 import { useEffect, useMemo, useState } from "react";
+import StackIcon from "tech-stack-icons";
 import { sectionShellClassName } from "@/lib/sectionLayout";
 import { cn } from "@/lib/utils";
 
@@ -24,11 +24,11 @@ function TechSkeleton() {
   );
 }
 
-function TechLogo({ name, iconUrl }) {
-  const [failed, setFailed] = useState(false);
+function TechLogo({ name, icon }) {
   const initial = (name || "?").slice(0, 2).toUpperCase();
+  const iconName = typeof icon === "string" ? icon.trim().toLowerCase() : "";
 
-  if (!iconUrl || failed) {
+  if (!iconName) {
     return (
       <span
         className={cn(
@@ -43,14 +43,9 @@ function TechLogo({ name, iconUrl }) {
   }
 
   return (
-    <Image
-      src={iconUrl}
-      alt=""
-      width={46}
-      height={46}
-      className="size-[2.625rem] object-contain opacity-90 transition-opacity duration-150 group-hover:opacity-100 sm:size-[2.875rem]"
-      unoptimized
-      onError={() => setFailed(true)}
+    <StackIcon
+      name={iconName}
+      className="size-[2.625rem] opacity-90 transition-opacity duration-150 group-hover:opacity-100 sm:size-[2.875rem]"
     />
   );
 }
@@ -97,15 +92,31 @@ export default function TechStackSection({ headlineFontClass }) {
     };
   }, []);
 
-  /** One list: category order from model, then name — no extra subheadings. */
-  const sortedItems = useMemo(() => {
+  const groupedItems = useMemo(() => {
     const rank = new Map(CATEGORY_ORDER.map((c, i) => [c, i]));
-    return [...items].sort((a, b) => {
-      const ca = typeof a.category === "string" ? rank.get(a.category) ?? 99 : 99;
-      const cb = typeof b.category === "string" ? rank.get(b.category) ?? 99 : 99;
-      if (ca !== cb) return ca - cb;
-      return String(a.name).localeCompare(String(b.name));
+    const grouped = new Map();
+
+    for (const item of items) {
+      const category =
+        typeof item?.category === "string" && item.category.trim() ? item.category : "Other";
+      if (!grouped.has(category)) grouped.set(category, []);
+      grouped.get(category).push(item);
+    }
+
+    const categories = Array.from(grouped.keys()).sort((a, b) => {
+      const ra = rank.get(a) ?? 99;
+      const rb = rank.get(b) ?? 99;
+      if (ra !== rb) return ra - rb;
+      return a.localeCompare(b);
     });
+
+    return categories.map((category) => ({
+      category,
+      items: grouped
+        .get(category)
+        .slice()
+        .sort((a, b) => String(a?.name ?? "").localeCompare(String(b?.name ?? ""))),
+    }));
   }, [items]);
 
   const containerVariants = {
@@ -170,44 +181,57 @@ export default function TechStackSection({ headlineFontClass }) {
             <p className="text-sm text-muted-foreground">No technologies listed yet.</p>
           ) : null}
 
-          {status === "ready" && sortedItems.length > 0 ? (
-            <motion.ul
-              className="flex flex-wrap items-center gap-x-6 gap-y-7 sm:gap-x-8 sm:gap-y-9"
-              variants={containerVariants}
-              initial="hidden"
-              whileInView="show"
-              viewport={{ once: true, margin: "-40px" }}
-            >
-              {sortedItems.map((tech) => {
-                const label = typeof tech.name === "string" ? tech.name : "Technology";
-                return (
-                  <motion.li key={String(tech._id ?? tech.name)} variants={cardVariants} className="shrink-0">
-                    <div
-                      tabIndex={0}
-                      title={label}
-                      className={cn(
-                        "group relative inline-flex cursor-default items-center justify-center outline-none",
-                        "rounded-md focus-visible:ring-2 focus-visible:ring-primary/35 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-                      )}
-                      aria-label={label}
-                    >
-                      <TechLogo name={tech.name} iconUrl={tech.icon} />
-                      <span
-                        className={cn(
-                          "pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 -translate-x-1/2 whitespace-nowrap rounded-md bg-foreground px-2.5 py-1 text-center text-xs font-medium text-background shadow-md",
-                          "invisible opacity-0 transition-[opacity,visibility] duration-150",
-                          "group-hover:visible group-hover:opacity-100",
-                          "group-focus-within:visible group-focus-within:opacity-100",
-                        )}
-                        role="tooltip"
-                      >
-                        {label}
-                      </span>
-                    </div>
-                  </motion.li>
-                );
-              })}
-            </motion.ul>
+          {status === "ready" && groupedItems.length > 0 ? (
+            <div className="space-y-8 sm:space-y-10">
+              {groupedItems.map((group) => (
+                <div key={group.category}>
+                  <h3 className="mb-4 text-sm font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+                    {group.category}
+                  </h3>
+                  <motion.ul
+                    className="flex flex-wrap items-center gap-x-6 gap-y-7 sm:gap-x-8 sm:gap-y-9"
+                    variants={containerVariants}
+                    initial="hidden"
+                    whileInView="show"
+                    viewport={{ once: true, margin: "-40px" }}
+                  >
+                    {group.items.map((tech) => {
+                      const label = typeof tech.name === "string" ? tech.name : "Technology";
+                      return (
+                        <motion.li
+                          key={String(tech._id ?? `${group.category}-${tech.name}`)}
+                          variants={cardVariants}
+                          className="shrink-0"
+                        >
+                          <div
+                            tabIndex={0}
+                            title={label}
+                            className={cn(
+                              "group relative inline-flex cursor-default items-center justify-center outline-none",
+                              "rounded-md focus-visible:ring-2 focus-visible:ring-primary/35 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                            )}
+                            aria-label={label}
+                          >
+                            <TechLogo name={tech.name} icon={tech.icon} />
+                            <span
+                              className={cn(
+                                "pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 -translate-x-1/2 whitespace-nowrap rounded-md bg-foreground px-2.5 py-1 text-center text-xs font-medium text-background shadow-md",
+                                "invisible opacity-0 transition-[opacity,visibility] duration-150",
+                                "group-hover:visible group-hover:opacity-100",
+                                "group-focus-within:visible group-focus-within:opacity-100",
+                              )}
+                              role="tooltip"
+                            >
+                              {label}
+                            </span>
+                          </div>
+                        </motion.li>
+                      );
+                    })}
+                  </motion.ul>
+                </div>
+              ))}
+            </div>
           ) : null}
         </div>
       </div>
