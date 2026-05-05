@@ -17,7 +17,7 @@ export default function ExperienceSection({ experiences = [], headlineFontClass 
   return (
     <section
       id="experience"
-      className="relative w-full scroll-mt-28 px-4 py-14 sm:px-6 sm:py-16 md:scroll-mt-32 md:py-20"
+      className="relative w-full scroll-mt-28 bg-muted/20 px-4 py-14 sm:px-6 sm:py-16 md:scroll-mt-32 md:py-20"
       aria-labelledby="experience-heading"
     >
       <div className={sectionShellClassName}>

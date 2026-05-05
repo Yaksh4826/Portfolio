@@ -3,16 +3,19 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "seed:admin": "node --env-file=.env scripts/seed-admin.mjs",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"
   },
   "dependencies": {
+    "bcryptjs": "^3.0.3",
     "class-variance-authority": "^0.7.1",
     "cloudinary": "^2.10.0",
     "clsx": "^2.1.1",
     "framer-motion": "^12.38.0",
+    "jose": "^6.2.3",
     "lucide-react": "^1.11.0",
     "mongoose": "^9.5.0",
     "next": "16.2.4",

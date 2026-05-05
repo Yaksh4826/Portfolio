@@ -10,13 +10,13 @@ const CATEGORY_ORDER = ["Frontend", "Backend", "AI/ML", "Robotics", "Tools"];
 
 function TechSkeleton() {
   return (
-    <div className="grid grid-cols-4 gap-3 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10">
-      {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((k) => (
+    <div className="flex flex-wrap items-center gap-x-6 gap-y-7 sm:gap-x-7 sm:gap-y-8">
+      {Array.from({ length: 14 }, (_, k) => (
         <div
           key={k}
           className={cn(
-            "aspect-square rounded-xl border border-border/50 bg-muted/25",
-            "motion-reduce:animate-none animate-pulse",
+            "size-[2.625rem] rounded-md bg-muted-foreground/[0.13] motion-reduce:animate-none",
+            "animate-pulse sm:size-[2.875rem]",
           )}
         />
       ))}
@@ -31,7 +31,10 @@ function TechLogo({ name, iconUrl }) {
   if (!iconUrl || failed) {
     return (
       <span
-        className="flex size-12 items-center justify-center rounded-xl bg-muted text-sm font-bold text-muted-foreground"
+        className={cn(
+          "flex size-[2.625rem] select-none items-center justify-center rounded-md",
+          "text-[11px] font-bold tracking-tight text-muted-foreground sm:size-[2.875rem] sm:text-xs",
+        )}
         aria-hidden
       >
         {initial}
@@ -40,17 +43,15 @@ function TechLogo({ name, iconUrl }) {
   }
 
   return (
-    <span className="relative flex size-12 items-center justify-center rounded-xl bg-background/90 p-2 ring-1 ring-border">
-      <Image
-        src={iconUrl}
-        alt=""
-        width={48}
-        height={48}
-        className="h-8 w-8 object-contain"
-        unoptimized
-        onError={() => setFailed(true)}
-      />
-    </span>
+    <Image
+      src={iconUrl}
+      alt=""
+      width={46}
+      height={46}
+      className="size-[2.625rem] object-contain opacity-90 transition-opacity duration-150 group-hover:opacity-100 sm:size-[2.875rem]"
+      unoptimized
+      onError={() => setFailed(true)}
+    />
   );
 }
 
@@ -126,7 +127,7 @@ export default function TechStackSection({ headlineFontClass }) {
   return (
     <section
       id="techstack"
-      className="relative w-full scroll-mt-28 bg-transparent px-4 py-16 sm:px-6 sm:py-20 md:scroll-mt-32"
+      className="relative w-full scroll-mt-28 bg-muted/25 px-4 py-16 sm:px-6 sm:py-20 md:scroll-mt-32"
       aria-labelledby="techstack-heading"
     >
       {/* Subtle lavender wash — blends with page bg (fixed radial on body) */}
@@ -171,7 +172,7 @@ export default function TechStackSection({ headlineFontClass }) {
 
           {status === "ready" && sortedItems.length > 0 ? (
             <motion.ul
-              className="grid grid-cols-4 gap-3 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10"
+              className="flex flex-wrap items-center gap-x-6 gap-y-7 sm:gap-x-8 sm:gap-y-9"
               variants={containerVariants}
               initial="hidden"
               whileInView="show"
@@ -180,24 +181,20 @@ export default function TechStackSection({ headlineFontClass }) {
               {sortedItems.map((tech) => {
                 const label = typeof tech.name === "string" ? tech.name : "Technology";
                 return (
-                  <motion.li
-                    key={String(tech._id ?? tech.name)}
-                    variants={cardVariants}
-                    className="relative overflow-visible"
-                  >
+                  <motion.li key={String(tech._id ?? tech.name)} variants={cardVariants} className="shrink-0">
                     <div
                       tabIndex={0}
                       title={label}
                       className={cn(
-                        "group relative flex aspect-square w-full cursor-default items-center justify-center rounded-xl border border-border/80 bg-card/50 shadow-sm outline-none",
-                        "transition-colors hover:border-primary/35 hover:bg-card/90 focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring",
+                        "group relative inline-flex cursor-default items-center justify-center outline-none",
+                        "rounded-md focus-visible:ring-2 focus-visible:ring-primary/35 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                       )}
                       aria-label={label}
                     >
                       <TechLogo name={tech.name} iconUrl={tech.icon} />
                       <span
                         className={cn(
-                          "pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 -translate-x-1/2 rounded-md bg-foreground px-2.5 py-1 text-center text-xs font-medium text-background shadow-md",
+                          "pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 -translate-x-1/2 whitespace-nowrap rounded-md bg-foreground px-2.5 py-1 text-center text-xs font-medium text-background shadow-md",
                           "invisible opacity-0 transition-[opacity,visibility] duration-150",
                           "group-hover:visible group-hover:opacity-100",
                           "group-focus-within:visible group-focus-within:opacity-100",
