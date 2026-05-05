@@ -1,9 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { sectionShellClassName } from "@/lib/sectionLayout";
 import { cn } from "@/lib/utils";
 import ProjectCard from "@/components/ProjectCard";
+
+const HOME_PROJECT_LIMIT = 4;
 
 function ProjectCardSkeleton() {
   return (
@@ -36,6 +40,7 @@ function ProjectCardSkeleton() {
 
 export default function ProjectsSection({ headlineFontClass }) {
   const [projects, setProjects] = useState([]);
+  const [totalCount, setTotalCount] = useState(0);
   const [status, setStatus] = useState("loading");
   const [errorMessage, setErrorMessage] = useState(null);
 
@@ -45,20 +50,23 @@ export default function ProjectsSection({ headlineFontClass }) {
       setStatus("loading");
       setErrorMessage(null);
       try {
-        const res = await fetch("/api/projects");
+        const res = await fetch(`/api/projects?limit=${HOME_PROJECT_LIMIT}`);
         const data = await res.json();
         if (cancelled) return;
         if (!data.success) {
           setProjects([]);
+          setTotalCount(0);
           setErrorMessage(typeof data.message === "string" ? data.message : "Could not load projects.");
           setStatus("error");
           return;
         }
         setProjects(Array.isArray(data.projects) ? data.projects : []);
+        setTotalCount(typeof data.total === "number" ? data.total : data.projects?.length ?? 0);
         setStatus("ready");
       } catch {
         if (cancelled) return;
         setProjects([]);
+        setTotalCount(0);
         setErrorMessage("Could not load projects.");
         setStatus("error");
       }
@@ -95,7 +103,7 @@ export default function ProjectsSection({ headlineFontClass }) {
 
         <div className="mt-10 flex w-full flex-col gap-10 lg:gap-14">
           {showSkeleton
-            ? [0, 1, 2].map((k) => <ProjectCardSkeleton key={k} />)
+            ? [0, 1, 2, 3].map((k) => <ProjectCardSkeleton key={k} />)
             : null}
 
           {!showSkeleton && status === "error" ? (
@@ -118,6 +126,22 @@ export default function ProjectsSection({ headlineFontClass }) {
                 />
               ))
             : null}
+
+          {!showSkeleton &&
+          status === "ready" &&
+          typeof totalCount === "number" &&
+          totalCount > HOME_PROJECT_LIMIT ? (
+            <div className="flex justify-center pt-2 lg:justify-start">
+              <Link
+                href="/projects"
+                prefetch
+                className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-6 py-2.5 text-sm font-semibold text-foreground shadow-sm transition hover:bg-muted/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35"
+              >
+                View all {totalCount} projects
+                <ArrowRight className="size-4" aria-hidden />
+              </Link>
+            </div>
+          ) : null}
         </div>
       </div>
     </section>

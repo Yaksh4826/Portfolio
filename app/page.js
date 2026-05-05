@@ -4,6 +4,7 @@ import TechStackSection from "@/components/TechStackSection";
 import ProjectsSection from "@/components/ProjectsSection";
 import ExperienceSection from "@/components/ExperienceSection";
 import ContactInviteSection from "@/components/ContactInviteSection";
+import HomeSectionDivider from "@/components/HomeSectionDivider";
 
 const nameFont = Space_Grotesk({
   subsets: ["latin"],
@@ -105,7 +106,7 @@ export default async function Home() {
   }
 
   return (
-    <>
+    <div className="flex w-full flex-col">
       <HeroSection
         name={name}
         tagLine={tagLine}
@@ -124,13 +125,17 @@ export default async function Home() {
         className="h-px w-full shrink-0 scroll-mt-28 overflow-hidden outline-none"
         aria-hidden
       />
+      <HomeSectionDivider />
       <TechStackSection headlineFontClass={nameFont.className} />
+      <HomeSectionDivider />
       <ProjectsSection headlineFontClass={nameFont.className} />
+      <HomeSectionDivider />
       <ExperienceSection
         experiences={experiences}
         headlineFontClass={nameFont.className}
       />
+      <HomeSectionDivider />
       <ContactInviteSection headlineFontClass={nameFont.className} />
-    </>
+    </div>
   );
 }

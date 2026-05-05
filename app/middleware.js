@@ -1,39 +1,41 @@
 import { NextResponse } from "next/server";
-import { ADMIN_TOKEN_COOKIE, ADMIN_TOKEN_VALUE } from "@/app/lib/adminSession";
+import { jwtVerify } from "jose";
+import { ADMIN_TOKEN_COOKIE } from "@/app/lib/adminSession";
+import { getAdminJwtSecretBytes } from "@/app/lib/adminJwt";
 
-/** No cookie required — login + unlock flows. */
-const PUBLIC_ADMIN_APIS = new Set(["/api/admin/auth", "/api/admin/logout"]);
-
-function hasValidAdminToken(request) {
-  const t = request.cookies.get(ADMIN_TOKEN_COOKIE);
-  return Boolean(t?.value && t.value === ADMIN_TOKEN_VALUE);
+async function isValidAdminJwt(request) {
+  const token = request.cookies.get(ADMIN_TOKEN_COOKIE)?.value;
+  if (!token) return false;
+  try {
+    const secret = await getAdminJwtSecretBytes();
+    await jwtVerify(token, secret);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export async function middleware(request) {
   const { pathname } = request.nextUrl;
+  const valid = await isValidAdminJwt(request);
 
-  // ── Admin UI (App Router pages) ──────────────────────────────────────
-  if (pathname === "/admin" || pathname.startsWith("/admin/")) {
-    if (pathname === "/admin/login" || pathname.startsWith("/admin/login/")) {
-      return NextResponse.next();
-    }
-    if (!hasValidAdminToken(request)) {
-      const login = new URL("/admin/login", request.url);
-      return NextResponse.redirect(login);
+  if (pathname === "/admin/login" || pathname.startsWith("/admin/login/")) {
+    if (valid) {
+      return NextResponse.redirect(new URL("/admin", request.url));
     }
     return NextResponse.next();
   }
 
-  // ── Admin APIs ───────────────────────────────────────────────────────
-  if (pathname.startsWith("/api/admin")) {
-    if (PUBLIC_ADMIN_APIS.has(pathname)) {
-      return NextResponse.next();
+  if (pathname === "/admin" || pathname.startsWith("/admin/")) {
+    if (!valid) {
+      return NextResponse.redirect(new URL("/admin/login", request.url));
     }
-    if (!hasValidAdminToken(request)) {
-      return NextResponse.json(
-        { message: "Unauthorized: invalid or missing admin_token." },
-        { status: 401 },
-      );
+    return NextResponse.next();
+  }
+
+  if (pathname.startsWith("/api/admin")) {
+    if (!valid) {
+      return NextResponse.json({ message: "Unauthorized." }, { status: 401 });
     }
     return NextResponse.next();
   }

@@ -13,17 +13,15 @@ const LINKS = [
   { href: "/admin/experience", label: "Experience" },
 ];
 
-/**
- * Layout only — `middleware` enforces `admin_token` on all /admin/* except /admin/login.
- */
+/** Middleware enforces JWT `admin_token` on `/admin/*` (except login) and `/api/admin/*`. */
 export default function AdminChrome({ children }) {
   const pathname = usePathname();
   const isLogin = pathname === "/admin/login";
 
   if (isLogin) {
     return (
-      <div className="min-h-[70vh] px-4 py-10 sm:px-6">
-        <div className="mx-auto w-full max-w-md">{children}</div>
+      <div className="fixed inset-0 z-[100] flex min-h-dvh items-center justify-center bg-zinc-950">
+        {children}
       </div>
     );
   }
@@ -32,9 +30,7 @@ export default function AdminChrome({ children }) {
     <div className="flex flex-col gap-8 px-4 pb-16 pt-4 lg:flex-row lg:px-8">
       <aside className="shrink-0 lg:w-52">
         <div className="sticky top-28 rounded-2xl border border-border bg-card p-4 shadow-sm">
-          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Admin
-          </p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Admin</p>
           <nav className="mt-3 flex flex-col gap-1">
             {LINKS.map(({ href, label }) => (
               <Link

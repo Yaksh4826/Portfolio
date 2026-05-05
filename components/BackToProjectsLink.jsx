@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
-/** Client island: only link used from project detail (prefetch + hash navigation). */
+/** Client island: link from project detail back to paginated `/projects` index. */
 export default function BackToProjectsLink({ variant = "inline" }) {
   const className =
     variant === "inline"
@@ -11,7 +11,7 @@ export default function BackToProjectsLink({ variant = "inline" }) {
       : "mt-8 inline-flex items-center gap-2 rounded-full border border-border bg-background px-6 py-2.5 text-sm font-semibold text-foreground shadow-sm transition hover:bg-muted/80";
 
   return (
-    <Link href="/#projects" prefetch className={className}>
+    <Link href="/projects" prefetch className={className}>
       <ArrowLeft className="size-4" />
       Back to projects
     </Link>
