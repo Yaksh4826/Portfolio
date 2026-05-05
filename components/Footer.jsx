@@ -96,11 +96,6 @@ export default function Footer() {
               </motion.span>
             )}
           </p>
-          <p className="mt-2 text-[0.5rem] text-muted-foreground/70 sm:text-[0.52rem]">
-            <a href="/admin/login" className="underline-offset-2 hover:text-muted-foreground hover:underline">
-              Admin
-            </a>
-          </p>
         </div>
       </div>
     </footer>

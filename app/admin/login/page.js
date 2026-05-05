@@ -1,80 +1,39 @@
 "use client";
 
-import { useState } from "react";
+import { useActionState } from "react";
 import Link from "next/link";
+import { loginAction } from "@/app/actions/auth";
 
 export default function AdminLoginPage() {
-  const [keyword, setKeyword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  /** No automatic redirect from this page — stops “always logged in” loops. Middleware still guards /admin. */
-
-  async function onSubmit(e) {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
-    try {
-      const res = await fetch("/api/admin/auth", {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ keyword }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data.ok) {
-        setError("Invalid secret keyword.");
-        return;
-      }
-      window.location.href = "/admin";
-    } catch {
-      setError("Could not sign in.");
-    } finally {
-      setLoading(false);
-    }
-  }
+  const [state, formAction, pending] = useActionState(loginAction, null);
 
   return (
-    <div className="rounded-2xl border border-border bg-card p-8 shadow-sm">
-      <h1 className="text-xl font-semibold text-foreground">Admin sign in</h1>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Enter your secret keyword. Middleware + cookie guard the admin area — no silent auto-login here.
-      </p>
-      <form onSubmit={onSubmit} className="mt-6 space-y-4">
-        <div>
-          <label htmlFor="admin-keyword" className="text-sm font-medium text-foreground">
-            Secret keyword
-          </label>
-          <input
-            id="admin-keyword"
-            type="password"
-            autoComplete="off"
-            value={keyword}
-            onChange={(e) => setKeyword(e.target.value)}
-            className="mt-1.5 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
-            required
-          />
-        </div>
-        {error ? (
-          <p className="text-sm text-destructive" role="alert">
-            {error}
+    <div className="mx-auto w-full max-w-xs px-4">
+      <form action={formAction} className="flex flex-col gap-4">
+        <input
+          name="password"
+          type="password"
+          autoComplete="current-password"
+          required
+          aria-label="Password"
+          placeholder="Password"
+          className="h-11 w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 text-sm text-zinc-100 placeholder:text-zinc-500 outline-none ring-offset-zinc-950 focus-visible:ring-2 focus-visible:ring-zinc-500"
+        />
+        {state?.message ? (
+          <p className="text-center text-sm text-red-400" role="alert">
+            {state.message}
           </p>
         ) : null}
         <button
           type="submit"
-          disabled={loading}
-          className="w-full rounded-full bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition hover:opacity-90 disabled:opacity-50"
+          disabled={pending}
+          className="h-11 rounded-md bg-zinc-100 text-sm font-medium text-zinc-950 transition hover:bg-white disabled:opacity-50"
         >
-          {loading ? "Signing in…" : "Sign in"}
+          {pending ? "Signing in…" : "Continue"}
         </button>
       </form>
-      <p className="mt-4 text-center text-sm">
-        <Link href="/admin" className="text-muted-foreground underline underline-offset-2 hover:text-foreground">
-          Already signed in? Open dashboard →
-        </Link>
-      </p>
-      <p className="mt-6 text-center text-sm text-muted-foreground">
-        <Link href="/" className="underline underline-offset-2 hover:text-foreground">
+      <p className="mt-8 text-center text-xs text-zinc-500">
+        <Link href="/" className="underline-offset-2 hover:text-zinc-300 hover:underline">
           Back to site
         </Link>
       </p>

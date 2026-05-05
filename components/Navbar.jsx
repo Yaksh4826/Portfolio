@@ -9,13 +9,25 @@ import { useCallback, useEffect, useRef, useState } from "react";
 const navigationData = [
   { title: "About", id: "about" },
   { title: "Tech", id: "techstack" },
-  { title: "Projects", id: "projects" },
+  { title: "Projects", id: "projects", href: "/projects" },
   { title: "Experience", id: "experience" },
   { title: "Contact me", id: "contact", href: "/contact" },
 ];
 
-/** Sections on the home page used for scroll-spy (contact is a separate route). */
-const SECTION_IDS = ["home", "about", "techstack", "projects", "experience"];
+/** Sections on the home page used for scroll-spy (projects + contact are separate routes). */
+const SECTION_IDS = ["home", "about", "techstack", "experience"];
+
+/** @param {{ href?: string; id: string }} navItem */
+function isNavHighlighted(navItem, pathname, activeSection, isHome) {
+  if (navItem.href) {
+    if (navItem.href === "/projects") {
+      return pathname === "/projects" || pathname.startsWith("/projects/");
+    }
+    return pathname === navItem.href;
+  }
+  if (!isHome) return false;
+  return activeSection === navItem.id;
+}
 
 const NAV_TOP_OFFSET = 96;
 
@@ -258,15 +270,12 @@ const Navbar = () => {
                       scrolled
                         ? "px-3 py-1.5 sm:px-3.5 sm:py-2"
                         : "px-3.5 py-2 sm:px-4 sm:py-2",
-                      (navItem.href
-                        ? pathname === navItem.href
-                        : activeSection === navItem.id) && (navItem.href || isHome)
+                      isNavHighlighted(navItem, pathname, activeSection, isHome)
                         ? NAV_LINK_ACTIVE
-                        : NAV_LINK_IDLE
+                        : NAV_LINK_IDLE,
                     )}
                     aria-current={
-                      (navItem.href ? pathname === navItem.href : activeSection === navItem.id) &&
-                      (navItem.href || isHome)
+                      isNavHighlighted(navItem, pathname, activeSection, isHome)
                         ? "page"
                         : undefined
                     }
@@ -364,15 +373,12 @@ const Navbar = () => {
                     className={cn(
                       NAV_TX,
                       "block rounded-full px-3 py-2.5 text-sm font-medium",
-                      (navItem.href
-                        ? pathname === navItem.href
-                        : activeSection === navItem.id) && (navItem.href || isHome)
+                      isNavHighlighted(navItem, pathname, activeSection, isHome)
                         ? NAV_LINK_ACTIVE
-                        : NAV_LINK_IDLE
+                        : NAV_LINK_IDLE,
                     )}
                     aria-current={
-                      (navItem.href ? pathname === navItem.href : activeSection === navItem.id) &&
-                      (navItem.href || isHome)
+                      isNavHighlighted(navItem, pathname, activeSection, isHome)
                         ? "page"
                         : undefined
                     }
