@@ -20,7 +20,7 @@ function buildTelHref(raw) {
 }
 
 export const metadata = {
-  title: "Contact · Portfolio",
+  title: "Contact · Yaksh Patel",
   description: "Get in touch for collaborations and opportunities.",
 };
 

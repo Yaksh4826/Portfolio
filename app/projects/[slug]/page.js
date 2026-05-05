@@ -70,7 +70,7 @@ export async function generateMetadata({ params }) {
   const project = await loadProject(raw);
   if (!project) return { title: "Project" };
   return {
-    title: `${project.title} · Portfolio`,
+    title: `${project.title} · Yaksh Patel`,
     description:
       project.summary ||
       (typeof project.description === "string" ? project.description.slice(0, 160) : undefined),
