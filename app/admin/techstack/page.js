@@ -22,6 +22,7 @@ export default function AdminTechStackPage() {
   const [editingId, setEditingId] = useState(null);
   const [msg, setMsg] = useState({ type: "", text: "" });
   const [busy, setBusy] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   const load = useCallback(async () => {
     const r = await fetch("/api/techstacks");
@@ -50,14 +51,47 @@ export default function AdminTechStackPage() {
     setMsg({ type: "", text: "" });
   }
 
+  async function onPickIcon(e) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setUploading(true);
+    setMsg({ type: "", text: "" });
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const r = await fetch("/api/admin/upload-image", {
+        method: "POST",
+        body: fd,
+        credentials: "include",
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || d.message || "Upload failed");
+      setForm((f) => ({ ...f, icon: d.url }));
+      setMsg({ type: "ok", text: "Icon uploaded to Cloudinary." });
+    } catch (err) {
+      setMsg({
+        type: "err",
+        text: err instanceof Error ? err.message : "Upload failed",
+      });
+    } finally {
+      setUploading(false);
+    }
+  }
+
   async function onSubmit(e) {
     e.preventDefault();
+    const iconUrl = form.icon.trim();
+    if (!iconUrl) {
+      setMsg({ type: "err", text: "Upload an icon image (Cloudinary)." });
+      return;
+    }
     setBusy(true);
     setMsg({ type: "", text: "" });
     const body = {
       name: form.name.trim(),
       category: form.category,
-      icon: form.icon.trim(),
+      icon: iconUrl,
     };
     try {
       if (editingId) {
@@ -103,7 +137,7 @@ export default function AdminTechStackPage() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-foreground">Tech stack</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Icon should be a URL (e.g. CDN or SVG link). Use upload elsewhere if needed.
+          Icons are uploaded to Cloudinary (same as project images). PNG or SVG recommended.
         </p>
       </div>
 
@@ -118,12 +152,23 @@ export default function AdminTechStackPage() {
                 const id = idStr(row);
                 return (
                   <li key={id} className="flex flex-wrap items-center justify-between gap-2 p-4">
-                    <div>
-                      <p className="font-medium text-foreground">{row.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {row.category} · {row.icon?.slice(0, 48)}
-                        {(row.icon?.length ?? 0) > 48 ? "…" : ""}
-                      </p>
+                    <div className="flex min-w-0 items-center gap-3">
+                      {row.icon ? (
+                        // eslint-disable-next-line @next/next/no-img-element -- admin preview, any host
+                        <img
+                          src={row.icon}
+                          alt=""
+                          className="size-10 shrink-0 rounded-lg border border-border bg-muted/30 object-contain p-1"
+                        />
+                      ) : (
+                        <span className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-dashed border-border text-xs text-muted-foreground">
+                          —
+                        </span>
+                      )}
+                      <div className="min-w-0">
+                        <p className="font-medium text-foreground">{row.name}</p>
+                        <p className="truncate text-xs text-muted-foreground">{row.category}</p>
+                      </div>
                     </div>
                     <div className="flex gap-2">
                       <button
@@ -179,13 +224,53 @@ export default function AdminTechStackPage() {
               ))}
             </select>
           </Field>
-          <Field label="Icon URL">
-            <input
-              className={inputClass}
-              value={form.icon}
-              onChange={(e) => setForm((f) => ({ ...f, icon: e.target.value }))}
-              required
-            />
+          <Field label="Icon">
+            <div className="mt-1 flex flex-wrap items-center gap-3">
+              {form.icon ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={form.icon}
+                  alt=""
+                  className="size-14 rounded-lg border border-border bg-muted/30 object-contain p-1"
+                />
+              ) : (
+                <span className="flex size-14 items-center justify-center rounded-lg border border-dashed border-border text-[10px] text-muted-foreground">
+                  No file
+                </span>
+              )}
+              <div className="flex flex-col gap-2">
+                <label className="inline-flex w-fit cursor-pointer">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={onPickIcon}
+                    disabled={uploading || busy}
+                  />
+                  <span
+                    className={cn(
+                      "rounded-md border border-border bg-muted/50 px-3 py-2 text-xs font-medium text-foreground",
+                      (uploading || busy) && "pointer-events-none opacity-50",
+                    )}
+                  >
+                    {uploading ? "Uploading…" : "Upload to Cloudinary"}
+                  </span>
+                </label>
+                {form.icon ? (
+                  <button
+                    type="button"
+                    className="w-fit text-xs text-destructive hover:underline"
+                    onClick={() => setForm((f) => ({ ...f, icon: "" }))}
+                    disabled={busy || uploading}
+                  >
+                    Remove icon
+                  </button>
+                ) : null}
+              </div>
+            </div>
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              Saved value is the Cloudinary URL returned after upload.
+            </p>
           </Field>
           {msg.text ? (
             <p className={cn("text-sm", msg.type === "ok" ? "text-green-600" : "text-destructive")}>

@@ -13,7 +13,7 @@ import {
  * JSON: { "dataUri": "data:image/png;base64,..." } or { "image": "<same>" }
  *
  * Response: { success: true, url, publicId, width?, height? }
- * Save `url` into project.thumbnail, profile.avatar, etc. — your existing APIs stay unchanged.
+ * Save `url` into project.thumbnail, profile.avatar, tech stack `icon`, etc.
  */
 export async function POST(req) {
   if (!isCloudinaryReady()) {
