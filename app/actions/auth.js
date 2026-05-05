@@ -60,6 +60,7 @@ export async function loginAction(_prev, formData) {
 
 export async function logoutAction() {
   const cookieStore = await cookies();
+  cookieStore.delete(ADMIN_TOKEN_COOKIE, { path: "/" });
   cookieStore.set(ADMIN_TOKEN_COOKIE, "", adminTokenClearCookieOptions());
-  redirect("/");
+  redirect("/admin/login");
 }

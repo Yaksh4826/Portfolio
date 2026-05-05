@@ -1,48 +1,59 @@
 import { NextResponse } from "next/server";
-import { jwtVerify } from "jose";
 import { ADMIN_TOKEN_COOKIE } from "@/app/lib/adminSession";
-import { getAdminJwtSecretBytes } from "@/app/lib/adminJwt";
+import { verifyAdminJwtCompact } from "@/app/lib/adminAuthJwt";
+import { attachClearedAdminTokenCookie } from "@/app/lib/adminCookieResponse";
 
-async function isValidAdminJwt(request) {
-  const token = request.cookies.get(ADMIN_TOKEN_COOKIE)?.value;
-  if (!token) return false;
-  try {
-    const secret = await getAdminJwtSecretBytes();
-    await jwtVerify(token, secret);
-    return true;
-  } catch {
-    return false;
-  }
+const NO_STORE = "private, no-store, max-age=0, must-revalidate";
+
+function readToken(request) {
+  return request.cookies.get(ADMIN_TOKEN_COOKIE)?.value ?? null;
 }
 
 export async function middleware(request) {
   const { pathname } = request.nextUrl;
-  const valid = await isValidAdminJwt(request);
+  const token = readToken(request);
+  const valid = token ? await verifyAdminJwtCompact(token) : false;
 
   if (pathname === "/admin/login" || pathname.startsWith("/admin/login/")) {
+    if (token && !valid) {
+      const res = NextResponse.next();
+      attachClearedAdminTokenCookie(res);
+      res.headers.set("Cache-Control", NO_STORE);
+      return res;
+    }
     if (valid) {
       return NextResponse.redirect(new URL("/admin", request.url));
     }
-    return NextResponse.next();
+    const res = NextResponse.next();
+    res.headers.set("Cache-Control", NO_STORE);
+    return res;
   }
 
   if (pathname === "/admin" || pathname.startsWith("/admin/")) {
     if (!valid) {
-      return NextResponse.redirect(new URL("/admin/login", request.url));
+      const res = NextResponse.redirect(new URL("/admin/login", request.url));
+      if (token) attachClearedAdminTokenCookie(res);
+      return res;
     }
-    return NextResponse.next();
+    const res = NextResponse.next();
+    res.headers.set("Cache-Control", NO_STORE);
+    return res;
   }
 
   if (pathname.startsWith("/api/admin")) {
     if (!valid) {
-      return NextResponse.json({ message: "Unauthorized." }, { status: 401 });
+      const res = NextResponse.json({ message: "Unauthorized." }, { status: 401 });
+      if (token) attachClearedAdminTokenCookie(res);
+      return res;
     }
-    return NextResponse.next();
+    const res = NextResponse.next();
+    res.headers.set("Cache-Control", NO_STORE);
+    return res;
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/admin", "/admin/:path*", "/api/admin/:path*"],
+  matcher: ["/admin", "/admin/:path*", "/api/admin", "/api/admin/:path*"],
 };

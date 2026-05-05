@@ -136,6 +136,24 @@
   }
 }
 
+/* Hero H1 shimmer — identical motion to Footer name; CSS-only so SSR/markup matches client */
+@keyframes hero-name-shimmer {
+  from {
+    background-position: 0% 50%;
+  }
+  to {
+    background-position: 100% 50%;
+  }
+}
+.animate-hero-name-shimmer {
+  animation: hero-name-shimmer 5.5s linear infinite alternate;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-hero-name-shimmer {
+    animation: none;
+  }
+}
+
 /* Navbar glass is styled in Navbar.jsx via Tailwind (always emitted). Fallback if blur unsupported: */
 @supports not ((-webkit-backdrop-filter: blur(2px)) or (backdrop-filter: blur(2px))) {
   [data-nav-shell] {

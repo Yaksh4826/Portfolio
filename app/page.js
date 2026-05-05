@@ -1,10 +1,16 @@
+import dynamic from "next/dynamic";
 import { Space_Grotesk } from "next/font/google";
 import HeroSection from "@/components/HeroSection";
-import TechStackSection from "@/components/TechStackSection";
-import ProjectsSection from "@/components/ProjectsSection";
 import ExperienceSection from "@/components/ExperienceSection";
 import ContactInviteSection from "@/components/ContactInviteSection";
 import HomeSectionDivider from "@/components/HomeSectionDivider";
+
+const TechStackSection = dynamic(() => import("@/components/TechStackSection"), {
+  loading: () => null,
+});
+const ProjectsSection = dynamic(() => import("@/components/ProjectsSection"), {
+  loading: () => null,
+});
 
 const nameFont = Space_Grotesk({
   subsets: ["latin"],
