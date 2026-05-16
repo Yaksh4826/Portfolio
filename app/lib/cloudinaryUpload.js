@@ -78,3 +78,62 @@ export async function uploadImageFromBlob(file) {
 export function isCloudinaryReady() {
   return configured();
 }
+
+
+const RESUME_TYPES = {
+  pdf: {
+    resource_type: "image",
+    mime: "application/pdf",
+  },
+  doc: {
+    resource_type: "raw",
+    mime: "application/msword",
+  },
+  docx: {
+    resource_type: "raw",
+    mime: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  },
+};
+
+function resumeExtensionFromFile(file) {
+  const name = (file.name || "").toLowerCase();
+  const fromName = name.match(/\.([a-z0-9]+)$/);
+  if (fromName && RESUME_TYPES[fromName[1]]) return fromName[1];
+
+  const mime = (file.type || "").toLowerCase();
+  for (const [ext, cfg] of Object.entries(RESUME_TYPES)) {
+    if (mime === cfg.mime) return ext;
+  }
+  return "pdf";
+}
+
+export async function uploadResumeFromBlob(file) {
+  applyConfig();
+  if (typeof file.size === "number") assertSize(file.size, "Resume");
+  const buffer = Buffer.from(await file.arrayBuffer());
+  assertSize(buffer.length, "Resume");
+
+  const ext = resumeExtensionFromFile(file);
+  const typeCfg = RESUME_TYPES[ext];
+  const mime =
+    (file.type && file.type.trim()) ||
+    typeCfg.mime ||
+    (ext === "pdf" ? "application/pdf" : "application/octet-stream");
+  const dataUri = `data:${mime};base64,${buffer.toString("base64")}`;
+
+  const result = await cloudinary.uploader.upload(dataUri, {
+    folder: `${defaultFolder()}/resumes`,
+    resource_type: typeCfg.resource_type,
+    ...(ext === "pdf" ? { format: "pdf" } : {}),
+    unique_filename: true,
+    overwrite: false,
+  });
+
+  const format = result.format && result.format !== "file" ? result.format : ext;
+  return {
+    url: result.secure_url,
+    publicId: result.public_id,
+    bytes: result.bytes,
+    format,
+  };
+}

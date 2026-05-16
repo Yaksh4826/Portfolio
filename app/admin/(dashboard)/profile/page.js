@@ -20,7 +20,8 @@ export default function AdminProfilePage() {
   const [form, setForm] = useState(empty);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState(false);
+  const [uploading, setUploading] = useState(false); // avatar uploading
+  const [uploadingResume, setUploadingResume] = useState(false); // resume uploading
   const [msg, setMsg] = useState({ type: "", text: "" });
 
   const load = useCallback(async () => {
@@ -67,6 +68,39 @@ export default function AdminProfilePage() {
       setMsg({ type: "err", text: e instanceof Error ? e.message : "Upload failed" });
     } finally {
       setUploading(false);
+    }
+  }
+
+  async function onPickResume(e) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+
+    setUploadingResume(true);
+    setMsg({ type: "", text: "" });
+
+    try {
+      const fd = new FormData(); // FIXED name
+      fd.append("file", file);
+
+      const res = await fetch("/api/admin/upload-resume", {
+        method: "POST",
+        body: fd,
+        credentials: "include", // FIXED
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || data.message || "Upload failed");
+
+      console.log("Resume uploaded:", data.url);
+      setMsg({ type: "ok", text: "Resume uploaded." });
+
+      // If you want to store resume URL in form:
+      // setForm((f) => ({ ...f, resume: data.url }));
+    } catch (err) {
+      setMsg({ type: "err", text: err instanceof Error ? err.message : "Upload failed" });
+    } finally {
+      setUploadingResume(false);
     }
   }
 
@@ -147,6 +181,22 @@ export default function AdminProfilePage() {
             </span>
           </label>
         </Field>
+
+        <Field label="Resume">
+          <label className="mt-2 flex cursor-pointer items-center gap-2 text-xs text-muted-foreground">
+            <input
+              type="file"
+              accept=".pdf,.doc,.docx"
+              className="hidden"
+              onChange={onPickResume}
+              disabled={uploadingResume}
+            />
+            <span className="rounded-md border border-border bg-muted/50 px-2 py-1 font-medium text-foreground">
+              {uploadingResume ? "Uploading…" : "Upload Resume"}
+            </span>
+          </label>
+        </Field>
+
         <Field label="GitHub URL">
           <input
             className={inputClass}

@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { FaGithub, FaLinkedin } from "react-icons/fa";
 import { SiGmail } from "react-icons/si";
 import { cn } from "@/lib/utils";
+import ResumeActions from "@/components/ResumeActions";
 
 /** Abstract loop — Pexels license: free for commercial use. Override with NEXT_PUBLIC_HERO_VIDEO_URL. */
 const DEFAULT_HERO_VIDEO =
@@ -52,6 +53,7 @@ export default function HeroSection({
   headlineFontClass,
   heroVideoUrl,
   callHref,
+  resumeViewUrl,
 }) {
   const videoRef = useRef(null);
   const heroVisualRootRef = useRef(null);
@@ -228,6 +230,8 @@ export default function HeroSection({
                 </a>
               ) : null}
             </div>
+
+            <ResumeActions viewUrl={resumeViewUrl} />
 
             <div className="mt-6 flex flex-wrap items-center gap-4 sm:mt-8">
               {socials?.github ? (

@@ -4,6 +4,7 @@ import HeroSection from "@/components/HeroSection";
 import ExperienceSection from "@/components/ExperienceSection";
 import ContactInviteSection from "@/components/ContactInviteSection";
 import HomeSectionDivider from "@/components/HomeSectionDivider";
+import { getResumeDeliveryLinks } from "@/lib/resumeDelivery";
 
 const TechStackSection = dynamic(() => import("@/components/TechStackSection"), {
   loading: () => null,
@@ -57,6 +58,9 @@ export default async function Home() {
   let bio = "";
   let avatar = "";
   let socials = {};
+  let resumeUrl = "";
+  let resumePublicId = "";
+  let resumeFormat = "pdf";
 
   try {
     const res = await fetch(`${baseUrl}/api/profile`, {
@@ -72,11 +76,20 @@ export default async function Home() {
         bio = profile.bio || "";
         avatar = profile.avatar || "";
         socials = profile.socials || {};
+        resumeUrl = profile.resumeUrl || "";
+        resumePublicId = profile.resumePublicId || "";
+        resumeFormat = profile.resumeFormat || "pdf";
       }
     }
   } catch {
     /* ignore profile fetch errors to avoid prerender failures */
   }
+
+  const { viewUrl: resumeViewUrl } = getResumeDeliveryLinks({
+    resumePublicId,
+    resumeUrl,
+    resumeFormat,
+  });
 
   const email = process.env.EMAIL;
   const mailHref =
@@ -123,6 +136,7 @@ export default async function Home() {
         socials={socials}
         headlineFontClass={nameFont.className}
         callHref={callHref}
+        resumeViewUrl={resumeViewUrl}
         heroVideoUrl={process.env.NEXT_PUBLIC_HERO_VIDEO_URL}
       />
       <div

@@ -6,6 +6,8 @@ import { SiGmail } from "react-icons/si";
 import PageEnter from "@/components/PageEnter";
 import { cn } from "@/lib/utils";
 import ContactForm from "@/components/ContactForm";
+import ResumeActions from "@/components/ResumeActions";
+import { getResumeDeliveryLinks } from "@/lib/resumeDelivery";
 import { getBaseUrl } from "@/lib/utils";
 
 const titleFont = Space_Grotesk({ subsets: ["latin"], display: "swap" });
@@ -29,6 +31,9 @@ export const dynamic = 'force-dynamic';
 export default async function ContactPage() {
   let name = "";
   let socials = {};
+  let resumeUrl = "";
+  let resumePublicId = "";
+  let resumeFormat = "pdf";
   try {
     const res = await fetch(`${getBaseUrl()}/api/profile`, { next: { revalidate: 120 } });
     const data = await res.json();
@@ -36,10 +41,19 @@ export default async function ContactPage() {
     if (p) {
       name = p.name || "";
       socials = p.socials || {};
+      resumeUrl = p.resumeUrl || "";
+      resumePublicId = p.resumePublicId || "";
+      resumeFormat = p.resumeFormat || "pdf";
     }
   } catch {
     /* optional */
   }
+
+  const { viewUrl: resumeViewUrl } = getResumeDeliveryLinks({
+    resumePublicId,
+    resumeUrl,
+    resumeFormat,
+  });
 
   const emailEnv = process.env.EMAIL;
   const mailHref =
@@ -131,6 +145,7 @@ export default async function ContactPage() {
                 </a>
               </li>
             ) : null}
+            <ResumeActions variant="contact" viewUrl={resumeViewUrl} />
           </ul>
 
           {(socials.github || socials.linkedin || mailHref) ? (
